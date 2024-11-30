@@ -1,31 +1,100 @@
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
 
+  public static final String CRLF = "\r\n";
+  private static final ExecutorService threadPool = Executors.newCachedThreadPool();
+
   public static void main(String[] args) {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    debug("Logs from your program will appear here!");
-
-    // Uncomment this block to pass the first stage
-
     try {
       ServerSocket serverSocket = new ServerSocket(4221);
+      debug("http server start on port: "+serverSocket.getLocalPort());
 
       // Since the tester restarts your program quite often, setting SO_REUSEADDR
       // ensures that we don't run into 'Address already in use' errors
       serverSocket.setReuseAddress(true);
 
-      serverSocket.accept(); // Wait for connection from client.
-      System.out.println("accepted new connection");
+      while(true){
+        // Wait for connection from client.
+        threadPool.execute(new ClientProcessor(serverSocket.accept()));
+      }
     } catch (IOException e) {
-      System.out.println("IOException: " + e.getMessage());
+      error("IOException: " + e.getMessage(), e);
+    }
+  }
+
+  private static class ClientProcessor implements Runnable {
+
+    private final Socket client;
+
+    private ClientProcessor(Socket client){
+      this.client = client;
+    }
+
+    @Override
+    public void run() {
+      debug("handle client: "+client);
+      try {
+        // client.setSoTimeout(5000);
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+        List<String> lines = new ArrayList<>();
+        String line = reader.readLine();
+        // debug(line);
+        while (!isEmpty(line)) {
+          lines.add(line);
+          line = reader.readLine();
+          // debug(line);
+        }
+        // debug("end recv");
+
+        write("HTTP/1.1 200 OK"+CRLF+CRLF);
+        closeClient();
+      } catch (IOException e) {
+        error("IOException: " + e.getMessage(), e);
+        closeClient();
+      }
+    }
+
+    private boolean isEmpty(String str){
+      return str == null || str.equals("");
+    }
+
+    private void process(List<String> lines) {
+      debug("lines: "+lines);
+    }
+
+    private void write(String respStr) throws IOException {
+      byte[] response = respStr.getBytes(StandardCharsets.UTF_8);
+      client.getOutputStream().write(response);
+      debug("send "+respStr);
+    }
+
+    private void closeClient(){
+      try {
+        client.close();
+        debug("close client: "+client);
+      } catch (IOException ex) {
+        ex.printStackTrace();
+      }
     }
   }
 
   private static void debug(String msg){
     System.out.println(msg);
+  }
+  private static void error(String msg, Exception e){
+    System.err.println(msg);
+    // e.printStackTrace();
   }
 
 }
