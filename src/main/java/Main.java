@@ -64,20 +64,24 @@ public class Main {
                 // debug("recv: "+ lines);
 
                 String path = requestLine.path();
-                String echo = "/echo/";
-                if(path.startsWith(echo)){
-                    String str = path.substring(echo.length());
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("HTTP/1.1 200 OK").append(CRLF);
-
-                    sb.append("Content-Type: text/plain").append(CRLF);
-                    sb.append("Content-Length: "+str.getBytes().length).append(CRLF);
-                    sb.append(CRLF); // CRLF that marks the end of the headers
-
-                    sb.append(str); // response body
-                    write(sb.toString());
+                if("/".equals(path)){
+                    write("HTTP/1.1 200 OK"+CRLF+CRLF);
                 }else{
-                    write("HTTP/1.1 404 Not Found"+CRLF+CRLF);
+                    String echo = "/echo/";
+                    if(path.startsWith(echo)){
+                        String str = path.substring(echo.length());
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("HTTP/1.1 200 OK").append(CRLF);
+
+                        sb.append("Content-Type: text/plain").append(CRLF);
+                        sb.append("Content-Length: "+str.getBytes().length).append(CRLF);
+                        sb.append(CRLF); // CRLF that marks the end of the headers
+
+                        sb.append(str); // response body
+                        write(sb.toString());
+                    }else{
+                        write("HTTP/1.1 404 Not Found"+CRLF+CRLF);
+                    }
                 }
 
                 closeClient();
