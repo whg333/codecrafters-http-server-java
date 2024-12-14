@@ -54,6 +54,7 @@ public class Main {
                 List<String> lines = new ArrayList<>();
                 String line = reader.readLine();
                 if(line == null){
+                    closeClient();
                     return;
                 }
                 // debug(line);
@@ -73,6 +74,7 @@ public class Main {
 
                 line = reader.readLine();
                 if(line == null){
+                    closeClient();
                     return;
                 }
                 lines.add(line);
