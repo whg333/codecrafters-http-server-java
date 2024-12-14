@@ -52,16 +52,17 @@ public class Main {
                 if(isEmpty(line)){
                     return;
                 }
-                debug(line);
+                // debug(line);
+                lines.add(line);
                 RequestLine requestLine = new RequestLine(line);
 
                 line = reader.readLine();
                 while (!isEmpty(line)) {
-                    debug(line);
+                    // debug(line);
                     lines.add(line);
                     line = reader.readLine();
                 }
-                // debug("recv: "+ lines);
+                debug("recv [\n"+ String.join("\n", lines)+"\n]");
 
                 String path = requestLine.path();
                 if("/".equals(path)){
