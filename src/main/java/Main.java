@@ -123,6 +123,8 @@ public class Main {
                         File file = filePath.toFile();
                         if(isPost){ // POST method
                             if(!file.exists()){
+                                debug(file.getAbsolutePath());
+                                // file.mkdirs();
                                 file.createNewFile();
                             }
                             Files.writeString(filePath, requestBody);
