@@ -49,13 +49,13 @@ public class Main {
         BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
         List<String> lines = new ArrayList<>();
         String line = reader.readLine();
-        // debug(line);
         while (!isEmpty(line)) {
+          debug(line);
           lines.add(line);
           line = reader.readLine();
-          // debug(line);
         }
         // debug("end recv");
+        debug("recv: "+ lines);
 
         write("HTTP/1.1 200 OK"+CRLF+CRLF);
         closeClient();
