@@ -73,11 +73,9 @@ public class Main {
                 parseHeader(lines);
 
                 line = reader.readLine();
-                if(line == null){
-                    closeClient();
-                    return;
+                if(line != null){
+                    lines.add(line);
                 }
-                lines.add(line);
                 debug("recv [\n"+ String.join("\n", lines)+"\n]");
 
                 String path = requestLine.path();
