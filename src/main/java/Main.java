@@ -110,12 +110,14 @@ public class Main {
         }
 
         private static void parseHeader(List<String> lines){
+            debug("parseHeader begin");
             for(String line: lines){
                 String[] headerArr = line.split(":");
                 if(headerArr.length == 2){
                     header.put(headerArr[0], headerArr[1].trim());
                 }
             }
+            debug("parseHeader end, "+header);
         }
 
         private static String textResp(String text){
