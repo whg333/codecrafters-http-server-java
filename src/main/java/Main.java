@@ -66,7 +66,7 @@ public class Main {
                     // debug(line);
                     lines.add(line);
                     if("".equals(line)){
-                        break;
+                        // break;
                     }
                     line = reader.readLine();
                 }
