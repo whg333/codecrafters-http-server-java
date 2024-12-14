@@ -85,7 +85,7 @@ public class Main {
 
                 boolean isPost = "POST".equals(requestLine.method());
                 String requestBody = "";
-                if(isPost){
+                if(isPost && reader.ready()){
                     line = reader.readLine();
                     if(line != null){
                         requestBody = line;
