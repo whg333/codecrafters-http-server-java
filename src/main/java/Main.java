@@ -75,30 +75,23 @@ public class Main {
                 while (line != null) {
                     // debug(line);
                     lines.add(line);
-                    if("".equals(line)){
-                        debug("got empty line");
-                        break;
-                    }
                     line = reader.readLine();
                 }
                 parseHeader(lines);
 
                 boolean isPost = "POST".equals(requestLine.method());
                 String requestBody = "";
-                if(isPost && reader.ready()){
-                    line = reader.readLine();
-                    if(line != null){
-                        requestBody = line;
-                        debug("requestBody: "+requestBody);
-                        String contentLenStr = header.get("Content-Length");
-                        if(contentLenStr != null){
-                            int reqBodyLen = requestBody.getBytes().length;
-                            int contentLen = Integer.parseInt(contentLenStr);
-                            if(reqBodyLen != contentLen){
-                                debug("requestBody length: "+reqBodyLen+", content length:"+contentLen);
-                            }
+                if(isPost){
+                    line = lines.get(lines.size()-1);
+                    requestBody = line;
+                    debug("requestBody: "+requestBody);
+                    String contentLenStr = header.get("Content-Length");
+                    if(contentLenStr != null){
+                        int reqBodyLen = requestBody.getBytes().length;
+                        int contentLen = Integer.parseInt(contentLenStr);
+                        if(reqBodyLen != contentLen){
+                            debug("requestBody length: "+reqBodyLen+", content length:"+contentLen);
                         }
-                        lines.add(line);
                     }
                 }
                 debug("recv [\n"+ String.join("\n", lines)+"\n]");
