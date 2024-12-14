@@ -4,6 +4,8 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,7 +20,14 @@ public class Main {
 
     private static final Map<String, String> header = new HashMap<>();
 
+    private static String dir = "/";
+
     public static void main(String[] args) {
+        if(args.length == 2){
+            if("--directory".equals(args[0])){
+                dir = args[1];
+            }
+        }
         try {
             ServerSocket serverSocket = new ServerSocket(4221);
             debug("http server start on port: "+serverSocket.getLocalPort());
@@ -84,6 +93,7 @@ public class Main {
                     write("HTTP/1.1 200 OK"+CRLF+CRLF);
                 }else{
                     String echo = "/echo/";
+                    String files = "/files/";
                     if(path.startsWith(echo)){
                         String str = path.substring(echo.length());
                         String respStr = textResp(str);
@@ -92,8 +102,17 @@ public class Main {
                         String agentStr = header.get("User-Agent");
                         String respStr = textResp(agentStr);
                         write(respStr);
+                    }else if(path.startsWith(files)){
+                        String fileName = path.substring(files.length());
+                        Path filePath = Path.of(dir, fileName);
+                        if(filePath.toFile().exists()){
+                            String respStr = fileResp(filePath);
+                            write(respStr);
+                        }else{
+                            writeNotFound();
+                        }
                     }else{
-                        write("HTTP/1.1 404 Not Found"+CRLF+CRLF);
+                        writeNotFound();
                     }
                 }
 
@@ -129,6 +148,24 @@ public class Main {
 
             sb.append(text); // response body
             return sb.toString();
+        }
+
+        private static String fileResp(Path filePath) throws IOException {
+            String fileContent = Files.readString(filePath);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("HTTP/1.1 200 OK").append(CRLF);
+
+            sb.append("Content-Type: application/octet-stream").append(CRLF);
+            sb.append("Content-Length: "+fileContent.getBytes().length).append(CRLF);
+            sb.append(CRLF); // CRLF that marks the end of the headers
+
+            sb.append(fileContent); // response body
+            return sb.toString();
+        }
+
+        private void writeNotFound() throws IOException {
+            write("HTTP/1.1 404 Not Found"+CRLF+CRLF);
         }
 
         private void write(String respStr) throws IOException {
