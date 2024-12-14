@@ -5,7 +5,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -13,6 +15,8 @@ public class Main {
 
     public static final String CRLF = "\r\n";
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
+
+    private static final Map<String, String> header = new HashMap<>();
 
     public static void main(String[] args) {
         try {
@@ -49,7 +53,7 @@ public class Main {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 List<String> lines = new ArrayList<>();
                 String line = reader.readLine();
-                if(isEmpty(line)){
+                if(line == null){
                     return;
                 }
                 // debug(line);
@@ -57,11 +61,21 @@ public class Main {
                 RequestLine requestLine = new RequestLine(line);
 
                 line = reader.readLine();
-                while (!isEmpty(line)) {
+                while (line != null) {
                     // debug(line);
                     lines.add(line);
+                    if("".equals(line)){
+                        break;
+                    }
                     line = reader.readLine();
                 }
+                parseHeader(lines);
+
+                line = reader.readLine();
+                if(line == null){
+                    return;
+                }
+                lines.add(line);
                 debug("recv [\n"+ String.join("\n", lines)+"\n]");
 
                 String path = requestLine.path();
@@ -71,15 +85,12 @@ public class Main {
                     String echo = "/echo/";
                     if(path.startsWith(echo)){
                         String str = path.substring(echo.length());
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("HTTP/1.1 200 OK").append(CRLF);
-
-                        sb.append("Content-Type: text/plain").append(CRLF);
-                        sb.append("Content-Length: "+str.getBytes().length).append(CRLF);
-                        sb.append(CRLF); // CRLF that marks the end of the headers
-
-                        sb.append(str); // response body
-                        write(sb.toString());
+                        String respStr = textResp(str);
+                        write(respStr);
+                    }else if(path.startsWith("/user-agent")){
+                        String agentStr = header.get("User-Agent");
+                        String respStr = textResp(agentStr);
+                        write(respStr);
                     }else{
                         write("HTTP/1.1 404 Not Found"+CRLF+CRLF);
                     }
@@ -92,12 +103,29 @@ public class Main {
             }
         }
 
-        private boolean isEmpty(String str){
-            return str == null || str.equals("");
-        }
-
         private void process(List<String> lines) {
             debug("lines: "+lines);
+        }
+
+        private static void parseHeader(List<String> lines){
+            for(String line: lines){
+                String[] headerArr = line.split(":");
+                if(headerArr.length == 2){
+                    header.put(headerArr[0], headerArr[1].trim());
+                }
+            }
+        }
+
+        private static String textResp(String text){
+            StringBuilder sb = new StringBuilder();
+            sb.append("HTTP/1.1 200 OK").append(CRLF);
+
+            sb.append("Content-Type: text/plain").append(CRLF);
+            sb.append("Content-Length: "+text.getBytes().length).append(CRLF);
+            sb.append(CRLF); // CRLF that marks the end of the headers
+
+            sb.append(text); // response body
+            return sb.toString();
         }
 
         private void write(String respStr) throws IOException {
