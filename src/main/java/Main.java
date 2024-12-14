@@ -189,7 +189,9 @@ public class Main {
                     gzipTextBytes = gzipCompress(text);
                 }
             }
-            sb.append("Content-Length: "+text.getBytes(UTF_8).length).append(CRLF);
+
+            byte[] textBytes = text.getBytes(UTF_8);
+            sb.append("Content-Length: "+(isGzip ? gzipTextBytes.length : textBytes.length)).append(CRLF);
             sb.append(CRLF); // CRLF that marks the end of the headers
 
             // sb.append(text); // response body
@@ -199,7 +201,7 @@ public class Main {
             if(isGzip){
                 msgBuf.put(gzipTextBytes);
             }else{
-                msgBuf.put(text.getBytes(UTF_8));
+                msgBuf.put(textBytes);
             }
 
             msgBuf.flip();
