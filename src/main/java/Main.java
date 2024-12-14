@@ -73,36 +73,39 @@ public class Main {
 
                 line = reader.readLine();
                 while (line != null) {
-                    debug(line);
+                    // debug(line);
                     lines.add(line);
-                    line = reader.readLine();
-                }
-                /*
-                if(reader.ready()){
-                    line = reader.readLine();
-                    if(line != null){
-                        lines.add(line);
+                    if("".equals(line)){
+                        debug("got empty line");
+                        break;
                     }
+                    line = reader.readLine();
                 }
-                */
-                debug("recv [\n"+ String.join("\n", lines)+"\n]");
                 parseHeader(lines);
 
                 boolean isPost = "POST".equals(requestLine.method());
-                String requestBody = "";
+                StringBuilder requestBody = new StringBuilder();
                 if(isPost){
-                    line = lines.get(lines.size()-1);
-                    requestBody = line;
-                    debug("requestBody: "+requestBody);
-                    String contentLenStr = header.get("Content-Length");
-                    if(contentLenStr != null){
-                        int reqBodyLen = requestBody.getBytes().length;
-                        int contentLen = Integer.parseInt(contentLenStr);
-                        if(reqBodyLen != contentLen){
-                            debug("requestBody length: "+reqBodyLen+", content length:"+contentLen);
+                    // line = reader.readLine();
+                    // if(line != null){
+                    //     requestBody = line;
+                    //     debug("requestBody: "+requestBody);
+                        String contentLenStr = header.get("Content-Length");
+                        if(contentLenStr != null){
+                            int contentLen = Integer.parseInt(contentLenStr);
+                            char[] charArray = new char[contentLen];
+                            int offset = 0;
+                            while (offset < contentLen) {
+                                int read = reader.read(charArray, offset, contentLen - offset);
+                                if (read == -1) break; // end of stream
+                                offset += read;
+                            }
+                            requestBody.append(charArray, 0, offset);
+                            lines.add(requestBody.toString());
                         }
-                    }
+                    // }
                 }
+                debug("recv [\n"+ String.join("\n", lines)+"\n]");
 
                 String path = requestLine.path();
                 if("/".equals(path)){
@@ -123,7 +126,6 @@ public class Main {
                         Path filePath = Path.of(dir, fileName);
                         File file = filePath.toFile();
                         if(isPost){ // POST method
-                            write("HTTP/1.1 201 Created"+CRLF+CRLF);
                             Path dirPath = filePath.getParent();
                             File dirFile = dirPath.toFile();
                             if(!dirFile.exists()){
@@ -135,6 +137,7 @@ public class Main {
                                 file.createNewFile();
                             }
                             Files.writeString(filePath, requestBody);
+                            write("HTTP/1.1 201 Created"+CRLF+CRLF);
                         }else{ // GET method
                             if(file.exists()){
                                 String respStr = fileResp(filePath);
@@ -153,10 +156,6 @@ public class Main {
                 error("IOException: " + e.getMessage(), e);
                 closeClient();
             }
-        }
-
-        private boolean isEmpty(String str){
-            return str == null || str.length() == 0;
         }
 
         private void process(List<String> lines) {
