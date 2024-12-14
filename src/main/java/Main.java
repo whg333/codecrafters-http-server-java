@@ -67,7 +67,7 @@ public class Main {
                     lines.add(line);
                     if("".equals(line)){
                         debug("got empty line");
-                        // break;
+                        break;
                     }
                     line = reader.readLine();
                 }
