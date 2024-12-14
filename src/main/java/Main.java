@@ -72,7 +72,7 @@ public class Main {
                 RequestLine requestLine = new RequestLine(line);
 
                 line = reader.readLine();
-                while (!isEmpty(line)) {
+                while (reader.ready()) {
                     // debug(line);
                     lines.add(line);
                     line = reader.readLine();
