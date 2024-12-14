@@ -191,7 +191,7 @@ public class Main {
             }
 
             byte[] textBytes = text.getBytes(UTF_8);
-            sb.append("Content-Length: "+(isGzip ? gzipTextBytes.length : textBytes.length)).append(CRLF);
+            sb.append("Content-Length: ").append(isGzip ? gzipTextBytes.length : textBytes.length).append(CRLF);
             sb.append(CRLF); // CRLF that marks the end of the headers
 
             // sb.append(text); // response body
@@ -217,7 +217,7 @@ public class Main {
             sb.append("HTTP/1.1 200 OK").append(CRLF);
 
             sb.append("Content-Type: application/octet-stream").append(CRLF);
-            sb.append("Content-Length: "+fileContent.getBytes(UTF_8).length).append(CRLF);
+            sb.append("Content-Length: ").append(fileContent.getBytes(UTF_8).length).append(CRLF);
             sb.append(CRLF); // CRLF that marks the end of the headers
 
             sb.append(fileContent); // response body
