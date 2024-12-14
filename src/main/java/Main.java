@@ -66,16 +66,17 @@ public class Main {
                     // debug(line);
                     lines.add(line);
                     if("".equals(line)){
+                        debug("got empty line");
                         // break;
                     }
                     line = reader.readLine();
                 }
                 parseHeader(lines);
 
-                line = reader.readLine();
-                if(line != null){
-                    lines.add(line);
-                }
+                // line = reader.readLine();
+                // if(line != null){
+                //     lines.add(line);
+                // }
                 debug("recv [\n"+ String.join("\n", lines)+"\n]");
 
                 String path = requestLine.path();
