@@ -82,7 +82,6 @@ public class Main {
                     line = reader.readLine();
                 }
                 parseHeader(lines);
-                debug("recv [\n"+ String.join("\n", lines)+"\n]");
 
                 boolean isPost = "POST".equals(requestLine.method());
                 String requestBody = "";
@@ -102,6 +101,7 @@ public class Main {
                         lines.add(line);
                     }
                 }
+                debug("recv [\n"+ String.join("\n", lines)+"\n]");
 
                 String path = requestLine.path();
                 if("/".equals(path)){
@@ -120,15 +120,15 @@ public class Main {
                     }else if(path.startsWith(files)){
                         String fileName = path.substring(files.length());
                         Path filePath = Path.of(dir, fileName);
+                        File file = filePath.toFile();
                         if(isPost){ // POST method
-                            File file = filePath.toFile();
                             if(!file.exists()){
                                 file.createNewFile();
                             }
                             Files.writeString(filePath, requestBody);
                             write("HTTP/1.1 201 Created"+CRLF+CRLF);
                         }else{ // GET method
-                            if(filePath.toFile().exists()){
+                            if(file.exists()){
                                 String respStr = fileResp(filePath);
                                 write(respStr);
                             }else{
