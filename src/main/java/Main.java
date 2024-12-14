@@ -102,7 +102,7 @@ public class Main {
         private void write(String respStr) throws IOException {
             byte[] response = respStr.getBytes(StandardCharsets.UTF_8);
             client.getOutputStream().write(response);
-            debug("send "+respStr);
+            debug("send [\n"+respStr+"]");
         }
 
         private void closeClient(){
