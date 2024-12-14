@@ -125,8 +125,8 @@ public class Main {
                                 debug("create file: "+file.getAbsolutePath());
                                 file.createNewFile();
                             }
-                            Files.writeString(filePath, requestBody);
                             write("HTTP/1.1 201 Created"+CRLF+CRLF);
+                            Files.writeString(filePath, requestBody);
                         }else{ // GET method
                             if(file.exists()){
                                 String respStr = fileResp(filePath);
