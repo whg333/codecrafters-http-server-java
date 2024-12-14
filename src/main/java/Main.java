@@ -140,7 +140,7 @@ public class Main {
         private void closeClient(){
             try {
                 client.close();
-                debug("close client: "+client);
+                debug("closed client: "+client);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
