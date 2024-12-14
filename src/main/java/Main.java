@@ -77,12 +77,14 @@ public class Main {
                     lines.add(line);
                     line = reader.readLine();
                 }
+                /*
                 if(reader.ready()){
                     line = reader.readLine();
                     if(line != null){
                         lines.add(line);
                     }
                 }
+                */
                 debug("recv [\n"+ String.join("\n", lines)+"\n]");
                 parseHeader(lines);
 
@@ -132,7 +134,7 @@ public class Main {
                                 debug("create file: "+file.getAbsolutePath());
                                 file.createNewFile();
                             }
-                            // Files.writeString(filePath, requestBody);
+                            Files.writeString(filePath, requestBody);
                         }else{ // GET method
                             if(file.exists()){
                                 String respStr = fileResp(filePath);
