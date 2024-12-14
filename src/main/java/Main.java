@@ -72,7 +72,7 @@ public class Main {
                 RequestLine requestLine = new RequestLine(line);
 
                 line = reader.readLine();
-                while (line != null) {
+                while (!isEmpty(line)) {
                     // debug(line);
                     lines.add(line);
                     line = reader.readLine();
@@ -145,6 +145,10 @@ public class Main {
                 error("IOException: " + e.getMessage(), e);
                 closeClient();
             }
+        }
+
+        private boolean isEmpty(String str){
+            return str == null || str.length() == 0;
         }
 
         private void process(List<String> lines) {
