@@ -19,8 +19,6 @@ public class Main {
     public static final String CRLF = "\r\n";
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
-    private static final Map<String, String> header = new HashMap<>();
-
     private static String dir = "/";
 
     public static void main(String[] args) {
@@ -62,7 +60,7 @@ public class Main {
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 List<String> lines = new ArrayList<>();
-                String line = reader.readLine();
+                String line = reader.readLine(); // readLine方法会读取到换行符为止，因此它非常适合读取起始行和头字段
                 if(line == null){
                     closeClient();
                     return;
@@ -81,29 +79,26 @@ public class Main {
                     }
                     line = reader.readLine();
                 }
-                parseHeader(lines);
+                Map<String, String> header = parseHeader(lines);
 
                 boolean isPost = "POST".equals(requestLine.method());
                 StringBuilder requestBody = new StringBuilder();
                 if(isPost){
-                    // line = reader.readLine();
-                    // if(line != null){
-                    //     requestBody = line;
-                    //     debug("requestBody: "+requestBody);
-                        String contentLenStr = header.get("Content-Length");
-                        if(contentLenStr != null){
-                            int contentLen = Integer.parseInt(contentLenStr);
-                            char[] charArray = new char[contentLen];
-                            int offset = 0;
-                            while (offset < contentLen) {
-                                int read = reader.read(charArray, offset, contentLen - offset);
-                                if (read == -1) break; // end of stream
-                                offset += read;
-                            }
-                            requestBody.append(charArray, 0, offset);
-                            lines.add(requestBody.toString());
+                    // 但是对于包含消息体的POST或PUT请求，消息体可能不以换行符结束，这就可能导致readLine正确读取消息体
+                    // 所以这里读取Content-Length头部的值即消息体的长度，并使用reader.read读取稻字符数组缓冲
+                    String contentLenStr = header.get("Content-Length");
+                    if(contentLenStr != null){
+                        int contentLen = Integer.parseInt(contentLenStr);
+                        char[] charBuf = new char[contentLen];
+                        int offset = 0;
+                        while (offset < contentLen) {
+                            int read = reader.read(charBuf, offset, contentLen - offset);
+                            if (read == -1) break; // end of stream
+                            offset += read;
                         }
-                    // }
+                        requestBody.append(charBuf, 0, offset);
+                        lines.add(requestBody.toString());
+                    }
                 }
                 debug("recv [\n"+ String.join("\n", lines)+"\n]");
 
@@ -162,7 +157,8 @@ public class Main {
             debug("lines: "+lines);
         }
 
-        private static void parseHeader(List<String> lines){
+        private static Map<String, String> parseHeader(List<String> lines){
+            Map<String, String> header = new HashMap<>();
             debug("parseHeader begin");
             for(String line: lines){
                 String[] headerArr = line.split(":");
@@ -171,6 +167,7 @@ public class Main {
                 }
             }
             debug("parseHeader end, "+header);
+            return header;
         }
 
         private static String textResp(String text){
