@@ -1,9 +1,7 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +9,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class Main {
 
@@ -18,6 +18,7 @@ public class Main {
     private static final ExecutorService threadPool = Executors.newCachedThreadPool();
 
     private static String dir = "/";
+    private static final Charset UTF_8 = StandardCharsets.UTF_8;
 
     public static void main(String[] args) {
         if(args.length == 2){
@@ -168,13 +169,11 @@ public class Main {
             return header;
         }
 
-        private static String textResp(String text, Map<String, String> header){
+        private static String textResp(String text, Map<String, String> header) throws IOException {
             StringBuilder sb = new StringBuilder();
             sb.append("HTTP/1.1 200 OK").append(CRLF);
 
             sb.append("Content-Type: text/plain").append(CRLF);
-            sb.append("Content-Length: "+text.getBytes().length).append(CRLF);
-
             String acceptEncoding = header.get("Accept-Encoding");
             if(acceptEncoding != null){
                 String[] acceptEncodingArr = acceptEncoding.split(",");
@@ -182,8 +181,10 @@ public class Main {
                         .map(String::trim).collect(Collectors.toSet());
                 if(acceptEncodingSet.contains("gzip")){
                     sb.append("Content-Encoding: gzip").append(CRLF);
+                    text = new String(gzipCompress(text), UTF_8);
                 }
             }
+            sb.append("Content-Length: "+text.getBytes(UTF_8).length).append(CRLF);
             sb.append(CRLF); // CRLF that marks the end of the headers
 
             sb.append(text); // response body
@@ -197,7 +198,7 @@ public class Main {
             sb.append("HTTP/1.1 200 OK").append(CRLF);
 
             sb.append("Content-Type: application/octet-stream").append(CRLF);
-            sb.append("Content-Length: "+fileContent.getBytes().length).append(CRLF);
+            sb.append("Content-Length: "+fileContent.getBytes(UTF_8).length).append(CRLF);
             sb.append(CRLF); // CRLF that marks the end of the headers
 
             sb.append(fileContent); // response body
@@ -209,7 +210,7 @@ public class Main {
         }
 
         private void write(String respStr) throws IOException {
-            byte[] response = respStr.getBytes(StandardCharsets.UTF_8);
+            byte[] response = respStr.getBytes(UTF_8);
             client.getOutputStream().write(response);
             debug("send [\n"+respStr+"\n]");
         }
@@ -240,6 +241,29 @@ public class Main {
         }
         String version(){
             return lineArr[2];
+        }
+    }
+
+    // gzip压缩字符串
+    public static byte[] gzipCompress(String str) throws IOException {
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+             GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream)) {
+            gzipOutputStream.write(str.getBytes(UTF_8));
+            gzipOutputStream.finish();
+            return byteArrayOutputStream.toByteArray();
+        }
+    }
+
+    // gzip解压缩字符串
+    public static String gzipDecompress(byte[] compressed) throws IOException {
+        try (GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(compressed));
+             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = gzipInputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, len);
+            }
+            return byteArrayOutputStream.toString(UTF_8);
         }
     }
 
