@@ -110,11 +110,11 @@ public class Main {
                     String files = "/files/";
                     if(path.startsWith(echo)){
                         String str = path.substring(echo.length());
-                        String respStr = textResp(str);
+                        String respStr = textResp(str, header);
                         write(respStr);
                     }else if(path.startsWith("/user-agent")){
                         String agentStr = header.get("User-Agent");
-                        String respStr = textResp(agentStr);
+                        String respStr = textResp(agentStr, header);
                         write(respStr);
                     }else if(path.startsWith(files)){
                         String fileName = path.substring(files.length());
@@ -170,12 +170,17 @@ public class Main {
             return header;
         }
 
-        private static String textResp(String text){
+        private static String textResp(String text, Map<String, String> header){
             StringBuilder sb = new StringBuilder();
             sb.append("HTTP/1.1 200 OK").append(CRLF);
 
             sb.append("Content-Type: text/plain").append(CRLF);
             sb.append("Content-Length: "+text.getBytes().length).append(CRLF);
+
+            String acceptEncoding = header.get("Accept-Encoding");
+            if(acceptEncoding != null && "gzip".equals(acceptEncoding)){
+                sb.append("Content-Encoding: gzip").append(CRLF);
+            }
             sb.append(CRLF); // CRLF that marks the end of the headers
 
             sb.append(text); // response body
