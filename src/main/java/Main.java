@@ -72,10 +72,16 @@ public class Main {
                 RequestLine requestLine = new RequestLine(line);
 
                 line = reader.readLine();
-                while (reader.ready()) {
+                while (!isEmpty(line)) {
                     // debug(line);
                     lines.add(line);
                     line = reader.readLine();
+                }
+                if(reader.ready()){
+                    line = reader.readLine();
+                    if(line != null){
+                        lines.add(line);
+                    }
                 }
                 debug("recv [\n"+ String.join("\n", lines)+"\n]");
                 parseHeader(lines);
