@@ -1,4 +1,5 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
@@ -82,10 +83,24 @@ public class Main {
                 }
                 parseHeader(lines);
 
-                // line = reader.readLine();
-                // if(line != null){
-                //     lines.add(line);
-                // }
+                boolean isPost = "POST".equals(requestLine.method());
+                String requestBody = "";
+                if(isPost){
+                    line = reader.readLine();
+                    if(line != null){
+                        requestBody = line;
+                        debug("requestBody: "+requestBody);
+                        String contentLenStr = header.get("Content-Length");
+                        if(contentLenStr != null){
+                            int reqBodyLen = requestBody.getBytes().length;
+                            int contentLen = Integer.parseInt(contentLenStr);
+                            if(reqBodyLen != contentLen){
+                                debug("requestBody length: "+reqBodyLen+", content length:"+contentLen);
+                            }
+                        }
+                        lines.add(line);
+                    }
+                }
                 debug("recv [\n"+ String.join("\n", lines)+"\n]");
 
                 String path = requestLine.path();
@@ -105,11 +120,20 @@ public class Main {
                     }else if(path.startsWith(files)){
                         String fileName = path.substring(files.length());
                         Path filePath = Path.of(dir, fileName);
-                        if(filePath.toFile().exists()){
-                            String respStr = fileResp(filePath);
-                            write(respStr);
-                        }else{
-                            writeNotFound();
+                        if(isPost){ // POST method
+                            File file = filePath.toFile();
+                            if(!file.exists()){
+                                file.createNewFile();
+                            }
+                            Files.writeString(filePath, requestBody);
+                            write("HTTP/1.1 201 Created"+CRLF+CRLF);
+                        }else{ // GET method
+                            if(filePath.toFile().exists()){
+                                String respStr = fileResp(filePath);
+                                write(respStr);
+                            }else{
+                                writeNotFound();
+                            }
                         }
                     }else{
                         writeNotFound();
