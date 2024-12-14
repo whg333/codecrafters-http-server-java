@@ -49,6 +49,9 @@ public class Main {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
                 List<String> lines = new ArrayList<>();
                 String line = reader.readLine();
+                if(isEmpty(line)){
+                    return;
+                }
                 debug(line);
                 RequestLine requestLine = new RequestLine(line);
 
