@@ -122,9 +122,14 @@ public class Main {
                         Path filePath = Path.of(dir, fileName);
                         File file = filePath.toFile();
                         if(isPost){ // POST method
+                            Path dirPath = filePath.getParent();
+                            File dirFile = dirPath.toFile();
+                            if(!dirFile.exists()){
+                                debug("create dir: "+dirFile.getAbsolutePath());
+                                dirFile.mkdirs();
+                            }
                             if(!file.exists()){
-                                debug(file.getAbsolutePath());
-                                // file.mkdirs();
+                                debug("create file: "+file.getAbsolutePath());
                                 file.createNewFile();
                             }
                             Files.writeString(filePath, requestBody);
