@@ -73,7 +73,7 @@ public class Main {
 
                 line = reader.readLine();
                 while (line != null) {
-                    // debug(line);
+                    debug(line);
                     lines.add(line);
                     line = reader.readLine();
                 }
