@@ -181,7 +181,7 @@ public class Main {
                         .map(String::trim).collect(Collectors.toSet());
                 if(acceptEncodingSet.contains("gzip")){
                     sb.append("Content-Encoding: gzip").append(CRLF);
-                    text = new String(gzipCompress(text), UTF_8);
+                    text = new String(gzipCompress(text));
                 }
             }
             sb.append("Content-Length: "+text.getBytes(UTF_8).length).append(CRLF);
