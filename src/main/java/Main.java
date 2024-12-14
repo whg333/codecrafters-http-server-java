@@ -77,6 +77,7 @@ public class Main {
                     lines.add(line);
                     line = reader.readLine();
                 }
+                debug("recv [\n"+ String.join("\n", lines)+"\n]");
                 parseHeader(lines);
 
                 boolean isPost = "POST".equals(requestLine.method());
@@ -94,7 +95,6 @@ public class Main {
                         }
                     }
                 }
-                debug("recv [\n"+ String.join("\n", lines)+"\n]");
 
                 String path = requestLine.path();
                 if("/".equals(path)){
@@ -115,6 +115,7 @@ public class Main {
                         Path filePath = Path.of(dir, fileName);
                         File file = filePath.toFile();
                         if(isPost){ // POST method
+                            write("HTTP/1.1 201 Created"+CRLF+CRLF);
                             Path dirPath = filePath.getParent();
                             File dirFile = dirPath.toFile();
                             if(!dirFile.exists()){
@@ -125,7 +126,6 @@ public class Main {
                                 debug("create file: "+file.getAbsolutePath());
                                 file.createNewFile();
                             }
-                            write("HTTP/1.1 201 Created"+CRLF+CRLF);
                             // Files.writeString(filePath, requestBody);
                         }else{ // GET method
                             if(file.exists()){
