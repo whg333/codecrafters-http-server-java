@@ -232,7 +232,7 @@ public class Main {
     }
     private static void error(String msg, Exception e){
         System.err.println(msg);
-        // e.printStackTrace();
+        e.printStackTrace();
     }
 
 }
