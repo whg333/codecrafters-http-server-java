@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -109,12 +111,12 @@ public class Main {
                     String files = "/files/";
                     if(path.startsWith(echo)){
                         String str = path.substring(echo.length());
-                        String respStr = textResp(str, header);
-                        write(respStr);
+                        byte[] respBytes = textResp(str, header);
+                        writeBytes(respBytes);
                     }else if(path.startsWith("/user-agent")){
                         String agentStr = header.get("User-Agent");
-                        String respStr = textResp(agentStr, header);
-                        write(respStr);
+                        byte[] respBytes = textResp(agentStr, header);
+                        writeBytes(respBytes);
                     }else if(path.startsWith(files)){
                         String fileName = path.substring(files.length());
                         Path filePath = Path.of(dir, fileName);
@@ -169,26 +171,41 @@ public class Main {
             return header;
         }
 
-        private static String textResp(String text, Map<String, String> header) throws IOException {
+        private static byte[] textResp(String text, Map<String, String> header) throws IOException {
             StringBuilder sb = new StringBuilder();
             sb.append("HTTP/1.1 200 OK").append(CRLF);
 
             sb.append("Content-Type: text/plain").append(CRLF);
             String acceptEncoding = header.get("Accept-Encoding");
+            boolean isGzip = false;
+            byte[] gzipTextBytes = new byte[0];
             if(acceptEncoding != null){
                 String[] acceptEncodingArr = acceptEncoding.split(",");
                 Set<String> acceptEncodingSet = Arrays.stream(acceptEncodingArr)
                         .map(String::trim).collect(Collectors.toSet());
                 if(acceptEncodingSet.contains("gzip")){
                     sb.append("Content-Encoding: gzip").append(CRLF);
-                    text = new String(gzipCompress(text));
+                    isGzip = true;
+                    gzipTextBytes = gzipCompress(text);
                 }
             }
             sb.append("Content-Length: "+text.getBytes(UTF_8).length).append(CRLF);
             sb.append(CRLF); // CRLF that marks the end of the headers
 
-            sb.append(text); // response body
-            return sb.toString();
+            // sb.append(text); // response body
+            ByteBuffer msgBuf = ByteBuffer.allocate(1024).order(ByteOrder.BIG_ENDIAN);
+            byte[] respBytes = sb.toString().getBytes(UTF_8);
+            msgBuf.put(respBytes);
+            if(isGzip){
+                msgBuf.put(gzipTextBytes);
+            }else{
+                msgBuf.put(text.getBytes(UTF_8));
+            }
+
+            msgBuf.flip();
+            byte[] msgBytes = new byte[msgBuf.remaining()];
+            msgBuf.get(msgBytes);
+            return msgBuf.array();
         }
 
         private static String fileResp(Path filePath) throws IOException {
@@ -211,8 +228,12 @@ public class Main {
 
         private void write(String respStr) throws IOException {
             byte[] response = respStr.getBytes(UTF_8);
+            writeBytes(response);
+        }
+
+        private void writeBytes(byte[] response) throws IOException {
             client.getOutputStream().write(response);
-            debug("send [\n"+respStr+"\n]");
+            debug("send [\n"+new String(response, UTF_8)+"\n]");
         }
 
         private void closeClient(){
